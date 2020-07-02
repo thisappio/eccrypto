@@ -213,7 +213,7 @@ exports.encrypt = function(publicKeyTo, msg, opts) {
     {
       ephemPrivateKey = opts.ephemPrivateKey || crypto.randomBytes(32);
     }
-    ephemPublicKey = getPublic(ephemPrivateKey);
+    ephemPublicKey = getPublicCompressed(ephemPrivateKey);
     resolve(derive(ephemPrivateKey, publicKeyTo));
   }).then(function(Px) {
     var hash = sha512(Px);
@@ -221,7 +221,7 @@ exports.encrypt = function(publicKeyTo, msg, opts) {
     var encryptionKey = hash.slice(0, 32);
     var macKey = hash.slice(32);
     var ciphertext = aes256CbcEncrypt(iv, encryptionKey, msg);
-    var dataToMac = Buffer.concat([iv, ephemPublicKey, ciphertext]);
+    var dataToMac = Buffer.concat([iv, ciphertext]);
     var mac = Buffer.from(hmacSha256(macKey, dataToMac));
     return {
       iv: iv,
@@ -249,7 +249,6 @@ exports.decrypt = function(privateKey, opts) {
     var macKey = hash.slice(32);
     var dataToMac = Buffer.concat([
       opts.iv,
-      opts.ephemPublicKey,
       opts.ciphertext
     ]);
     var realMac = hmacSha256(macKey, dataToMac);
